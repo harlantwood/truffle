@@ -16,12 +16,13 @@ contract('MetaCoin', function(accounts) {
       return meta.getBalanceInEth.call(accounts[0]);
     }).then(function(outCoinBalanceEth){
       metaCoinEthBalance = outCoinBalanceEth.toNumber();
-      
+
     }).then(function(){
       assert.equal(metaCoinEthBalance,2*metaCoinBalance,"Library function returned unexpeced function, linkage may be broken");
-      
+
     }).then(done).catch(done);
   });
+
   it("should send coin correctly", function(done) {
     var meta = MetaCoin.deployed();
 
@@ -53,5 +54,32 @@ contract('MetaCoin', function(accounts) {
       assert.equal(account_one_ending_balance, account_one_starting_balance - amount, "Amount wasn't correctly taken from the sender");
       assert.equal(account_two_ending_balance, account_two_starting_balance + amount, "Amount wasn't correctly sent to the receiver");
     }).then(done).catch(done);
+  });
+
+  contract('sad path', function() {
+    it("should throw an error if sender does not have sufficient tokens", function(done) {
+      var meta = MetaCoin.deployed();
+
+      // Get initial balances of first and second account.
+      var account_one = accounts[0];
+      var account_two = accounts[1];
+
+      var account_one_starting_balance;
+      var account_two_starting_balance;
+      var account_one_ending_balance;
+      var account_two_ending_balance;
+
+      var amount = 100;
+
+      meta.getBalance.call(account_two).then(function(balance) {
+        account_two_starting_balance = balance.toNumber();
+        assert.equal(account_two_starting_balance, 0)
+        return meta.sendCoin(account_one, amount, {from: account_two});
+      }).then(function() {
+        throw new Error("Expected solidity error to be thown from contract, but was not")
+      }).catch(function(error) {
+        if (error.message.search('invalid JUMP') == -1) throw error
+      }).then(done).catch(done);
+    });
   });
 });

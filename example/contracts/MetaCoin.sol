@@ -13,7 +13,7 @@ contract MetaCoin {
 	}
 
 	function sendCoin(address receiver, uint amount) returns(bool sufficient) {
-		if (balances[msg.sender] < amount) return false;
+		if (balances[msg.sender] < amount) throw;
 		balances[msg.sender] -= amount;
 		balances[receiver] += amount;
 		return true;
